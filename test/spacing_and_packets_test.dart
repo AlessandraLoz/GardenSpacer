@@ -46,6 +46,25 @@ void main() {
     expect(parsed.plant.betweenRowInches, 18);
   });
 
+  test('5x5 ft Burpee Better Boy fits a 2x2 grid', () {
+    final tomato = Plant(
+      name: 'Better Boy Hybrid Tomato',
+      brand: 'Burpee',
+      category: 'vegetable',
+      method: SpacingMethod.row,
+      inRowInches: 36,
+      betweenRowInches: 48,
+    );
+    expect(
+      calculatePlantCount(
+        tomato,
+        toInches(5, BedUnit.feet),
+        toInches(5, BedUnit.feet),
+      ),
+      4,
+    );
+  });
+
   test('parses mixed inch and feet row wording', () {
     final parsed = parseSeedPacketText(
       'Set plants 36 inches apart in rows 4 feet apart.',
