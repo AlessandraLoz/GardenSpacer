@@ -1,5 +1,12 @@
 enum BedUnit { inches, feet, centimeters, millimeters, meters }
 
+BedUnit bedUnitFromName(String? name) {
+  return BedUnit.values.firstWhere(
+    (value) => value.name == name,
+    orElse: () => BedUnit.inches,
+  );
+}
+
 double toInches(double value, BedUnit unit) {
   switch (unit) {
     case BedUnit.inches:
@@ -42,6 +49,35 @@ double amountToInches(double value, String unit) {
     default:
       return value;
   }
+}
+
+double fromInches(double inches, BedUnit unit) {
+  switch (unit) {
+    case BedUnit.inches:
+      return inches;
+    case BedUnit.feet:
+      return inches / 12;
+    case BedUnit.centimeters:
+      return inches * 2.54;
+    case BedUnit.millimeters:
+      return inches * 25.4;
+    case BedUnit.meters:
+      return inches * 2.54 / 100;
+  }
+}
+
+String formatAmount(double value) {
+  if (value == value.roundToDouble()) {
+    return value.round().toString();
+  }
+  var text = value.toStringAsFixed(3);
+  while (text.contains('.') && text.endsWith('0')) {
+    text = text.substring(0, text.length - 1);
+  }
+  if (text.endsWith('.')) {
+    text = text.substring(0, text.length - 1);
+  }
+  return text;
 }
 
 String bedUnitLabel(BedUnit unit) {

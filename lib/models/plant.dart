@@ -2,7 +2,7 @@ enum SpacingMethod { row, squareFoot }
 
 class Plant {
   final String name;
-  final String category; // herb, vegetable, fruit
+  final String category; // herb, vegetable, fruit, flower
   final SpacingMethod method;
 
   // Row method
@@ -14,6 +14,7 @@ class Plant {
 
   final String? brand;
   final String? packetExtract;
+  final String? searchTags;
 
   Plant({
     required this.name,
@@ -24,6 +25,7 @@ class Plant {
     this.perSquareFoot,
     this.brand,
     this.packetExtract,
+    this.searchTags,
   });
 
   String get displayName {

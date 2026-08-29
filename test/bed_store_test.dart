@@ -37,4 +37,29 @@ void main() {
     expect(beds.first.name, 'back bed');
     expect(beds.first.length, '8');
   });
+
+  test('round-trips icon and mixed plantings', () async {
+    final store = BedStore();
+    await store.upsert(
+      const SavedBed(
+        name: 'Vegetables',
+        length: '8',
+        width: '4',
+        unit: 'feet',
+        icon: 'bowl',
+        plantings: [
+          SavedPlanting(plantDisplayName: 'Tomato (indeterminate)'),
+          SavedPlanting(plantDisplayName: 'Cucumber (trellised)'),
+        ],
+      ),
+    );
+
+    final beds = await store.loadAll();
+    expect(beds.single.icon, 'bowl');
+    expect(beds.single.allPlantings, hasLength(2));
+    expect(
+      beds.single.allPlantings.map((planting) => planting.plantDisplayName),
+      ['Tomato (indeterminate)', 'Cucumber (trellised)'],
+    );
+  });
 }

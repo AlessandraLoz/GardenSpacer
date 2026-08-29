@@ -12,6 +12,8 @@ void main() {
     expect(toInches(254, BedUnit.centimeters), closeTo(100, 0.01));
     expect(toInches(25.4, BedUnit.millimeters), closeTo(1, 0.01));
     expect(toInches(1, BedUnit.meters), closeTo(39.37007874, 0.0001));
+    expect(fromInches(12, BedUnit.feet), 1);
+    expect(fromInches(1, BedUnit.centimeters), closeTo(2.54, 0.0001));
   });
 
   test('feet bed matches known lettuce count', () {
