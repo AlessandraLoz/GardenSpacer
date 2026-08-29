@@ -10,14 +10,12 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('Home screen shows calculate controls', (WidgetTester tester) async {
+  testWidgets('Home screen shows saved-beds empty state', (WidgetTester tester) async {
     await tester.pumpWidget(const GardenSpacerApp());
     await tester.pump();
 
     expect(find.text('GardenSpacer'), findsOneWidget);
-    expect(find.text('Bed name'), findsOneWidget);
-    expect(find.text('Bed length (inches)'), findsOneWidget);
-    expect(find.text('Bed width (inches)'), findsOneWidget);
-    expect(find.text('Calculate and save'), findsOneWidget);
+    expect(find.text('Your beds will show up here'), findsOneWidget);
+    expect(find.text('New bed'), findsOneWidget);
   });
 }
