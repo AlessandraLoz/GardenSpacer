@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import '../models/plant.dart';
 
 class PlantCountResult {
@@ -49,5 +51,22 @@ PlantCountResult calculatePlantLayout(
   }
 
   final sqFt = (bedLengthIn * bedWidthIn) / 144;
-  return PlantCountResult(count: (sqFt * plant.perSquareFoot!).floor());
+  final count = (sqFt * plant.perSquareFoot!).floor();
+  final grid = squareFootGrid(count, bedLengthIn, bedWidthIn);
+  return PlantCountResult(count: count, rows: grid.$1, perRow: grid.$2);
+}
+
+(int, int) squareFootGrid(int count, double bedLengthIn, double bedWidthIn) {
+  if (count <= 0) {
+    return (0, 0);
+  }
+  final aspect = bedLengthIn <= 0 || bedWidthIn <= 0
+      ? 1.0
+      : bedLengthIn / bedWidthIn;
+  var cols = math.sqrt(count * aspect).round().clamp(1, count);
+  var rows = (count / cols).ceil();
+  if (rows < 1) {
+    rows = 1;
+  }
+  return (rows, cols);
 }

@@ -9,58 +9,137 @@ class PacketParseResult {
 }
 
 /// Pulls row spacing or square-foot density from typical seed-packet wording.
-PacketParseResult? parseSeedPacketText(String raw) {
-  final text = raw
-      .toLowerCase()
-      .replaceAll('″', '"')
-      .replaceAll('′', "'")
-      .replaceAll('×', 'x')
-      .replaceAll(RegExp(r'\s+'), ' ');
-
-  if (text.trim().isEmpty) {
+PacketParseResult? parseSeedPacketText(
+  String raw, {
+  String? name,
+  String? brand,
+}) {
+  final text = cleanPacketText(raw);
+  if (text.isEmpty) {
     return null;
   }
 
   final perSqFt = _perSquareFoot(text);
   if (perSqFt != null) {
+    final explanation = '$perSqFt plants per square foot';
     return PacketParseResult(
       plant: Plant(
-        name: 'Custom packet',
+        name: name ?? 'Custom packet',
         category: 'vegetable',
         method: SpacingMethod.squareFoot,
         perSquareFoot: perSqFt,
+        brand: brand,
+        packetExtract: explanation,
       ),
-      explanation: '$perSqFt plants per square foot',
+      explanation: explanation,
     );
   }
 
-  final inRow = _inRowInches(text);
-  final betweenRow = _betweenRowInches(text);
+  final pair = _inRowAndBetween(text);
+  var inRow = pair.$1 ?? _labeledInRowInches(text) ?? _inRowInches(text);
+  var betweenRow =
+      pair.$2 ?? _labeledBetweenRowInches(text) ?? _betweenRowInches(text);
+
+  if (inRow != null && inRow < 2 && betweenRow != null && betweenRow >= 12) {
+    inRow = null;
+  }
+
+  if (inRow != null && betweenRow == null) {
+    betweenRow = inRow;
+  }
+
   if (inRow != null && betweenRow != null && inRow > 0 && betweenRow > 0) {
+    final explanation =
+        '${_prettyInches(inRow)} in the row, ${_prettyInches(betweenRow)} between rows';
     return PacketParseResult(
       plant: Plant(
-        name: 'Custom packet',
+        name: name ?? 'Custom packet',
         category: 'vegetable',
         method: SpacingMethod.row,
         inRowInches: inRow,
         betweenRowInches: betweenRow,
+        brand: brand,
+        packetExtract: explanation,
       ),
-      explanation:
-          '${_prettyInches(inRow)} in the row, ${_prettyInches(betweenRow)} between rows',
+      explanation: explanation,
     );
   }
 
   return null;
 }
 
+String cleanPacketText(String raw) {
+  return raw
+      .replaceAll(RegExp(r'<[^>]+>'), ' ')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&#x27;', "'")
+      .replaceAll('&#39;', "'")
+      .replaceAll('&amp;', '&')
+      .replaceAllMapped(RegExp(r'(\d)\?(?!\d)'), (m) => '${m[1]}"')
+      .replaceAll('″', '"')
+      .replaceAll('′', "'")
+      .replaceAll('×', 'x')
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim()
+      .toLowerCase();
+}
+
+double? _labeledInRowInches(String text) {
+  final match = RegExp(
+    r'(?:plant|plants?)\s+spacing\s*:?\s*' +
+        _amountPattern +
+        r'\s*' +
+        _unitPattern,
+  ).firstMatch(text);
+  if (match == null) {
+    final seed = RegExp(
+      r'seed\s+spacing\s*:?\s*' + _amountPattern + r'\s*' + _unitPattern,
+    ).firstMatch(text);
+    if (seed == null) {
+      return null;
+    }
+    final inches = _rangeToInches(seed);
+    return inches >= 2 ? inches : null;
+  }
+  return _rangeToInches(match);
+}
+
+double? _labeledBetweenRowInches(String text) {
+  final match = RegExp(
+    r'row\s+spacing\s*:?\s*' + _amountPattern + r'\s*' + _unitPattern,
+  ).firstMatch(text);
+  if (match == null) {
+    return null;
+  }
+  return _rangeToInches(match);
+}
+
 int? _perSquareFoot(String text) {
   final match = RegExp(
-    r'(\d+)\s*(?:plants?\s+)?(?:per|/)\s*(?:sq\.?\s*ft\.?|square\s+feet|square\s+foot)',
+    r'(\d+)\s*(?:plants?\s+)?(?:per|/)\s*(?:sq\.?\s*ft\.?|sqft|square\s+feet|square\s+foot)',
   ).firstMatch(text);
   if (match == null) {
     return null;
   }
   return int.tryParse(match.group(1)!);
+}
+
+(double?, double?) _inRowAndBetween(String text) {
+  final match = RegExp(
+    _amountPattern +
+        r'\s*(?:x|by)\s*' +
+        _amountPattern2 +
+        r'\s*' +
+        _unitPattern,
+  ).firstMatch(text);
+  if (match == null) {
+    return (null, null);
+  }
+  final unit = match.namedGroup('unit') ?? 'in';
+  final first = amountToInches(_parseNumber(match.namedGroup('amount')!), unit);
+  final second = amountToInches(_parseNumber(match.namedGroup('b')!), unit);
+  return (first, second);
 }
 
 double? _inRowInches(String text) {
@@ -73,16 +152,17 @@ double? _inRowInches(String text) {
           r')?',
     ),
     RegExp(
+      r'(?:sow|plant|space|spaced|spacing|every)\s+(?:plants?\s+)?' +
+          _amountPattern +
+          r'\s*' +
+          _unitPattern +
+          r'(?:\s*apart)?',
+    ),
+    RegExp(
       r'set\s+plants?\s+' + _amountPattern + r'\s*' + _unitPattern + r'\s*apart',
     ),
     RegExp(
       r'plants?\s+' + _amountPattern + r'\s*' + _unitPattern + r'\s*apart',
-    ),
-    RegExp(
-      r'(?:space|spaced|spacing)\s+(?:plants?\s+)?' +
-          _amountPattern +
-          r'\s*' +
-          _unitPattern,
     ),
     RegExp(
       _amountPattern +
@@ -130,7 +210,9 @@ double? _betweenRowInches(String text) {
 }
 
 const _amountPattern =
-    r'(?<amount>\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)(?:\s*[-–to]+\s*(?<amount2>\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?))?';
+    r'(?<amount>\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)(?:\s*(?:[-–]|to|or)\s*(?<amount2>\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?))?';
+const _amountPattern2 =
+    r'(?<b>\d+\s+\d+/\d+|\d+/\d+|\d+(?:\.\d+)?)';
 const _unitPattern =
     r'(?<unit>inches|inch|in|feet|foot|ft|centimeters|centimeter|cm|millimeters|millimeter|mm|meters|meter|m|"|\x27)';
 

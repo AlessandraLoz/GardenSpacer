@@ -73,4 +73,42 @@ void main() {
     expect(parsed!.plant.inRowInches, 36);
     expect(parsed.plant.betweenRowInches, 48);
   });
+
+  test('parses thin-to ranges in centimeters', () {
+    final parsed = parseSeedPacketText(
+      'Thin to 2 to 3 cm. Rows 30 cm apart.',
+    );
+    expect(parsed, isNotNull);
+    expect(parsed!.plant.inRowInches, closeTo(3 / 2.54, 0.01));
+    expect(parsed.plant.betweenRowInches, closeTo(30 / 2.54, 0.01));
+  });
+
+  test('parses 30 x 45 cm as row spacing', () {
+    final parsed = parseSeedPacketText('Sow 30 x 45 cm.');
+    expect(parsed, isNotNull);
+    expect(parsed!.plant.inRowInches, closeTo(30 / 2.54, 0.01));
+    expect(parsed.plant.betweenRowInches, closeTo(45 / 2.54, 0.01));
+  });
+
+  test('parses plants per sqft shorthand', () {
+    final parsed = parseSeedPacketText('16 per sqft');
+    expect(parsed, isNotNull);
+    expect(parsed!.plant.perSquareFoot, 16);
+  });
+
+  test('parses labeled row spacing and ignores tiny seed spacing', () {
+    final parsed = parseSeedPacketText(
+      'Seed Spacing: 1/2 inch Row Spacing: 3-4 feet Set plants 24 inches apart',
+    );
+    expect(parsed, isNotNull);
+    expect(parsed!.plant.inRowInches, 24);
+    expect(parsed.plant.betweenRowInches, 48);
+  });
+
+  test('uses a single apart spacing as a square grid', () {
+    final parsed = parseSeedPacketText('Space 12 inches apart.');
+    expect(parsed, isNotNull);
+    expect(parsed!.plant.inRowInches, 12);
+    expect(parsed.plant.betweenRowInches, 12);
+  });
 }
