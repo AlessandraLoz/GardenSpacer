@@ -21,7 +21,10 @@ class BedDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(bed.name),
+        title: Text(
+          bed.name,
+          style: theme.textTheme.titleLarge,
+        ),
         actions: [
           IconButton(
             tooltip: 'Edit',

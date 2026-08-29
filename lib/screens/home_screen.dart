@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../data/bed_store.dart';
 import '../logic/saved_bed_layout.dart';
 import '../models/saved_bed.dart';
+import '../theme/appearance.dart';
+import '../theme/appearance_scope.dart';
+import 'appearance_screen.dart';
 import 'bed_detail_screen.dart';
 import 'bed_editor_screen.dart';
 
@@ -70,10 +73,25 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final appearance = AppearanceScope.of(context).appearance;
+    final cozy = appearance.layout != GardenLayout.compact;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('GardenSpacer'),
+        actions: [
+          IconButton(
+            tooltip: 'Look & feel',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AppearanceScreen(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.palette_outlined),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _openEditor,
@@ -89,15 +107,21 @@ class _HomeScreenState extends State<HomeScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
+                        Icon(
+                          Icons.eco_rounded,
+                          size: 88,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(height: 16),
                         Text(
-                          'Your beds will show up here',
-                          style: theme.textTheme.titleMedium,
+                          'Your garden starts here',
+                          style: theme.textTheme.headlineMedium,
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Add a bed, give it a name, and tap it later to see how many plants fit.',
-                          style: theme.textTheme.bodyMedium?.copyWith(
+                          'Name a bed, pick a packet, and it will live on this list.',
+                          style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                           textAlign: TextAlign.center,
@@ -106,17 +130,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   )
                 : ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                    padding: layoutPadding(appearance.layout),
                     itemCount: _savedBeds.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 8),
+                    separatorBuilder: (context, index) => SizedBox(
+                      height: appearance.layout == GardenLayout.airy ? 16 : 10,
+                    ),
                     itemBuilder: (context, index) {
                       final layout = layoutForSavedBed(_savedBeds[index]);
                       final count = layout.result?.count;
                       return Card(
                         clipBehavior: Clip.antiAlias,
                         child: ListTile(
-                          title: Text(layout.bed.name),
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: cozy ? 20 : 12,
+                            vertical: appearance.layout == GardenLayout.airy
+                                ? 16
+                                : cozy
+                                    ? 10
+                                    : 4,
+                          ),
+                          leading: CircleAvatar(
+                            backgroundColor: theme.colorScheme.primaryContainer,
+                            child: Icon(
+                              Icons.local_florist_rounded,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                          title: Text(
+                            layout.bed.name,
+                            style: theme.textTheme.titleLarge,
+                          ),
                           subtitle: Text(
                             [
                               layout.plantLabel,

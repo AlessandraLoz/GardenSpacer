@@ -7,6 +7,7 @@ import '../logic/saved_bed_layout.dart';
 import '../logic/unit_conversion.dart';
 import '../models/plant.dart';
 import '../models/saved_bed.dart';
+import '../widgets/plant_lookup.dart';
 
 class BedEditorScreen extends StatefulWidget {
   final SavedBed? existing;
@@ -220,29 +221,40 @@ class _BedEditorScreenState extends State<BedEditorScreen> {
                 validator: _validatePositiveNumber,
               ),
               const SizedBox(height: 16),
-              DropdownButtonFormField<Plant>(
+              FormField<Plant>(
                 initialValue: _selectedPlant,
-                isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Plant or seed packet',
-                  border: OutlineInputBorder(),
-                ),
-                items: [
-                  for (final plant in catalogPlants)
-                    DropdownMenuItem(
-                      value: plant,
+                validator: _validatePlant,
+                builder: (field) {
+                  return InkWell(
+                    onTap: () async {
+                      final picked = await showPlantLookup(
+                        context,
+                        selected: _selectedPlant,
+                      );
+                      if (picked == null) {
+                        return;
+                      }
+                      setState(() {
+                        _selectedPlant = picked;
+                      });
+                      field.didChange(picked);
+                    },
+                    child: InputDecorator(
+                      isEmpty: _selectedPlant == null,
+                      decoration: InputDecoration(
+                        labelText: 'Plant or seed packet',
+                        hintText: 'Search packets',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: const Icon(Icons.search),
+                        errorText: field.errorText,
+                      ),
                       child: Text(
-                        plant.displayName,
+                        _selectedPlant?.displayName ?? '',
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                ],
-                onChanged: (plant) {
-                  setState(() {
-                    _selectedPlant = plant;
-                  });
+                  );
                 },
-                validator: _validatePlant,
               ),
               if (selectedExtract != null) ...[
                 const SizedBox(height: 8),

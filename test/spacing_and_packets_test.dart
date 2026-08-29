@@ -96,6 +96,15 @@ void main() {
     expect(parsed!.plant.perSquareFoot, 16);
   });
 
+  test('parses labeled row spacing and ignores tiny seed spacing', () {
+    final parsed = parseSeedPacketText(
+      'Seed Spacing: 1/2 inch Row Spacing: 3-4 feet Set plants 24 inches apart',
+    );
+    expect(parsed, isNotNull);
+    expect(parsed!.plant.inRowInches, 24);
+    expect(parsed.plant.betweenRowInches, 48);
+  });
+
   test('uses a single apart spacing as a square grid', () {
     final parsed = parseSeedPacketText('Space 12 inches apart.');
     expect(parsed, isNotNull);
